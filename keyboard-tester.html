@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>键盘测试 · 全尺寸 108 键</title>
+<style>
+  :root {
+    --u: clamp(24px, 4.3vw, 50px);
+    --gap: 6px;
+    --ink: #111111;
+    --line: #e6e6e6;
+    --muted: #9a9a9a;
+    --bg: #ffffff;
+    --radius: 7px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 20px 48px;
+  }
+
+  header { text-align: center; margin-bottom: 22px; }
+
+  header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 0 0 6px;
+  }
+
+  header p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+
+  /* ---------- 顶部：曲线图 + 统计区 ---------- */
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 10px 14px;
+  }
+
+  .stat {
+    min-width: 96px;
+    padding: 12px 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    text-align: center;
+    background: #fff;
+  }
+
+  .stat .num {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat .lbl {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .stat.accent .num { color: var(--ink); }
+
+  /* 锁定指示灯 */
+  .locks {
+    display: flex;
+    gap: 22px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .lock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .led {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    transition: background .12s, border-color .12s, box-shadow .12s;
+  }
+  .lock.on { color: var(--ink); }
+  .lock.on .led {
+    background: var(--ink);
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(17,17,17,0.08);
+  }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; }
+  button.reset {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background .12s, border-color .12s;
+  }
+  button.reset:hover { background: #f6f6f6; border-color: #d8d8d8; }
+  button.reset:active { background: #efefef; }
+
+  /* ---------- APM 曲线（缩小版，置于统计区左侧） ---------- */
+  .chart-panel {
+    width: 300px;
+    padding: 10px 12px 6px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+  .chart-head b { color: var(--ink); font-size: 13px; font-variant-numeric: tabular-nums; }
+  #apmChart { width: 100%; height: 62px; display: block; }
+
+  /* ---------- 键盘 ---------- */
+  .kb-scroll { width: 100%; text-align: center; padding: 0 32px 8px; }
+  .keyboard {
+    display: inline-flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+
+  .row {
+    display: flex;
+    gap: var(--gap);
+  }
+  .numpad-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+
+  .body {
+    display: flex;
+    gap: var(--gap);
+    align-items: flex-start;
+  }
+
+  .main, .nav, .numpad { display: flex; flex-direction: column; gap: var(--gap); }
+
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(4, var(--u));
+    grid-auto-rows: var(--u);
+    gap: var(--gap);
+  }
+
+  .key {
+    width: var(--u);
+    height: var(--u);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--u) * 0.30);
+    line-height: 1;
+    user-select: none;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+    transition: background .04s ease, color .04s ease, transform .04s ease, border-color .04s ease;
+  }
+  .key .sub { font-size: 0.7em; opacity: .55; margin-left: 2px; }
+
+  /* 触发过（已松开）的键：灰底。注意必须放在 .active 之前，
+     否则同特异性下后定义的灰底会盖住“正在按下”的黑底 */
+  .key.hit {
+    background: #eeeeee;
+    border-color: #e0e0e0;
+  }
+
+  .key.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+    transform: translateY(1px);
+    box-shadow: none;
+  }
+
+  /* 锁定状态键：亮起小圆点 */
+  .key.locked::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+
+  .spacer { height: var(--u); }
+
+  /* 跨行/跨列键：必须覆盖 .key 默认的 width/height，否则被内联样式挡住无法拉伸 */
+  .numpad .tall { grid-row: span 2; height: auto; }
+  .numpad .wide { grid-column: span 2; width: auto !important; }
+
+  footer {
+    margin-top: 30px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.7;
+  }
+  .hint { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>键盘测试器</h1>
+    <p>全尺寸配列 · 实时 APM · 自动识别锁定状态</p>
+  </header>
+
+  <div class="topbar">
+    <div class="chart-panel">
+      <div class="chart-head"><span>APM 曲线</span><b id="chartNow">0</b></div>
+      <canvas id="apmChart"></canvas>
+    </div>
+    <div class="stats">
+      <div class="stat accent">
+        <div class="num" id="apm">0</div>
+        <div class="lbl">瞬时 APM</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="peak">0</div>
+        <div class="lbl">峰值 APM</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="total">0</div>
+        <div class="lbl">总触发次数</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="coverage">0 / 0</div>
+        <div class="lbl">已测键位</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="last">—</div>
+        <div class="lbl">最近按键</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="locks">
+    <div class="lock" id="lock-caps"><span class="led"></span>CAPS LOCK</div>
+    <div class="lock" id="lock-num"><span class="led"></span>NUM LOCK</div>
+    <div class="lock" id="lock-scroll"><span class="led"></span>SCROLL LOCK</div>
+  </div>
+
+  <div class="toolbar">
+    <button class="reset" id="resetBtn">重置统计</button>
+  </div>
+
+  <div class="kb-scroll">
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+
+  <footer>
+    <div class="hint">按下任意键开始测试 · 物理键位识别，不受输入法影响</div>
+    <div>黑底 = 正在按下的键 · 灰底 = 已触发的键 · 白底 = 未触发的键 · 亮起圆点 = 已锁定的功能键</div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // 键位数据：label 显示文字，code 对应 event.code（物理键），w/h 宽度单位
+  const K = (label, code, w, extra) => Object.assign({ label, code, w }, extra || {});
+
+  // 功能键区
+  const fnLeft = [
+    K("Esc", "Escape"),
+    { gap: 0.6 },
+    K("F1", "F1"), K("F2", "F2"), K("F3", "F3"), K("F4", "F4"),
+    { gap: 0.6 },
+    K("F5", "F5"), K("F6", "F6"), K("F7", "F7"), K("F8", "F8"),
+    { gap: 0.6 },
+    K("F9", "F9"), K("F10", "F10"), K("F11", "F11"), K("F12", "F12"),
+  ];
+  // PrtSc / ScrLk / Pause 置于导航区最顶行，正对下方 Ins/Home/PgUp
+  const fnRight = [];
+
+  // 主键区
+  const mainRows = [
+    [
+      K("`", "Backquote"), K("1", "Digit1"), K("2", "Digit2"), K("3", "Digit3"),
+      K("4", "Digit4"), K("5", "Digit5"), K("6", "Digit6"), K("7", "Digit7"),
+      K("8", "Digit8"), K("9", "Digit9"), K("0", "Digit0"), K("-", "Minus"),
+      K("=", "Equal"), K("⌫", "Backspace", 2),
+    ],
+    [
+      K("Tab", "Tab", 1.5), K("Q", "KeyQ"), K("W", "KeyW"), K("E", "KeyE"),
+      K("R", "KeyR"), K("T", "KeyT"), K("Y", "KeyY"), K("U", "KeyU"),
+      K("I", "KeyI"), K("O", "KeyO"), K("P", "KeyP"), K("[", "BracketLeft"),
+      K("]", "BracketRight"), K("\\", "Backslash", 1.5),
+    ],
+    [
+      K("Caps", "CapsLock", 1.75), K("A", "KeyA"), K("S", "KeyS"), K("D", "KeyD"),
+      K("F", "KeyF"), K("G", "KeyG"), K("H", "KeyH"), K("J", "KeyJ"),
+      K("K", "KeyK"), K("L", "KeyL"), K(";", "Semicolon"), K("'", "Quote"),
+      K("Enter", "Enter", 2.25),
+    ],
+    [
+      K("Shift", "ShiftLeft", 2.25), K("Z", "KeyZ"), K("X", "KeyX"), K("C", "KeyC"),
+      K("V", "KeyV"), K("B", "KeyB"), K("N", "KeyN"), K("M", "KeyM"),
+      K(",", "Comma"), K(".", "Period"), K("/", "Slash"),
+      K("Shift", "ShiftRight", 2.75),
+    ],
+    [
+      K("Ctrl", "ControlLeft", 1.25), K("Win", "MetaLeft", 1.25),
+      K("Alt", "AltLeft", 1.25), K("", "Space", 6.25),
+      K("Alt", "AltRight", 1.25), K("Win", "MetaRight", 1.25),
+      K("Menu", "ContextMenu", 1.25), K("Ctrl", "ControlRight", 1.25),
+    ],
+  ];
+
+  // 编辑 / 方向键区
+  // 顶行 PrtSc/ScrLk/Pause 正对下方 Ins/Home/PgUp；方向键 ↑ 正对 ↓
+  const navRows = [
+    [K("PrtSc", "PrintScreen"), K("ScrLk", "ScrollLock"), K("Pause", "Pause")],
+    [K("Ins", "Insert"), K("Home", "Home"), K("PgUp", "PageUp")],
+    [K("Del", "Delete"), K("End", "End"), K("PgDn", "PageDown")],
+    [{ spacer: true }, { spacer: true }, { spacer: true }],
+    [{ spacer: true }, K("↑", "ArrowUp"), { spacer: true }],
+    [K("←", "ArrowLeft"), K("↓", "ArrowDown"), K("→", "ArrowRight")],
+  ];
+
+  // 小键盘区（网格）
+  const numpad = [
+    K("Num", "NumLock"), K("/", "NumpadDivide"), K("*", "NumpadMultiply"), K("-", "NumpadSubtract"),
+    K("7", "Numpad7"), K("8", "Numpad8"), K("9", "Numpad9"), K("+", "NumpadAdd", 1, { cls: "tall" }),
+    K("4", "Numpad4"), K("5", "Numpad5"), K("6", "Numpad6"),
+    K("1", "Numpad1"), K("2", "Numpad2"), K("3", "Numpad3"), K("Enter", "NumpadEnter", 1, { cls: "tall" }),
+    K("0", "Numpad0", 1, { cls: "wide" }), K(".", "NumpadDecimal"),
+  ];
+
+  const keyboard = document.getElementById("keyboard");
+  const codeMap = new Map();   // event.code -> element
+  const totalMappable = { n: 0 };
+
+  function makeKey(spec) {
+    const el = document.createElement("div");
+    el.className = "key";
+    if (spec.w) el.style.width = `calc(var(--u) * ${spec.w})`;
+    if (spec.code) {
+      el.dataset.code = spec.code;
+      codeMap.set(spec.code, el);
+      totalMappable.n++;
+    }
+    if (spec.cls) el.classList.add(spec.cls);
+    if (spec.label) el.textContent = spec.label;
+    return el;
+  }
+
+  function makeSpacer(w) {
+    const s = document.createElement("div");
+    s.className = "spacer";
+    // 不传宽度时默认占 1 格，避免 flex 行内塌缩为 0，导致占位失效
+    s.style.width = `calc(var(--u) * ${w != null ? w : 1})`;
+    return s;
+  }
+
+  function buildRow(items) {
+    const row = document.createElement("div");
+    row.className = "row";
+    items.forEach((it) => {
+      if (it.gap != null) row.appendChild(makeSpacer(it.gap));
+      else if (it.spacer) row.appendChild(makeSpacer());
+      else row.appendChild(makeKey(it));
+    });
+    return row;
+  }
+
+  // 统一顶行结构（标准全尺寸）：
+  //   主键列最顶行 = Esc / F1–F12
+  //   导航列最顶行 = PrtSc / ScrLk / Pause  → 与 F1–F12 同一水平带（等高），且正对下方 Ins/Home/PgUp
+  //   小键盘整体下移一行，顶端 NumLk / * / - 与数字行对齐；三块底部等高
+  const body = document.createElement("div");
+  body.className = "body";
+
+  const main = document.createElement("div");
+  main.className = "main";
+  main.appendChild(buildRow(fnLeft));          // 功能键行并入主键列顶行
+  mainRows.forEach((r) => main.appendChild(buildRow(r)));
+
+  const nav = document.createElement("div");
+  nav.className = "nav";
+  navRows.forEach((r) => nav.appendChild(buildRow(r)));
+
+  const npCol = document.createElement("div");
+  npCol.className = "numpad-col";
+  npCol.appendChild(makeSpacer());             // 下移一行，与数字行对齐
+  const np = document.createElement("div");
+  np.className = "numpad";
+  numpad.forEach((it) => {
+    if (it.spacer) np.appendChild(makeSpacer());
+    else np.appendChild(makeKey(it));
+  });
+  npCol.appendChild(np);
+
+  body.appendChild(main);
+  body.appendChild(nav);
+  body.appendChild(npCol);
+  keyboard.appendChild(body);
+
+  // ---------- 统计逻辑 ----------
+  const elApm = document.getElementById("apm");
+  const elPeak = document.getElementById("peak");
+  const elTotal = document.getElementById("total");
+  const elCoverage = document.getElementById("coverage");
+  const elLast = document.getElementById("last");
+
+  const hits = [];          // 触发时间戳（ms）
+  let total = 0;
+  let peak = 0;
+  const pressedSet = new Set();
+
+  const APM_WINDOW = 1000;      // 瞬时窗口：最近 1 秒
+  const SAMPLE_MS = 500;        // 曲线采样间隔
+  const MAX_POINTS = 120;       // 曲线点数（120 × 0.5s = 60s 窗口）
+  const apmBuf = [];            // 瞬时 APM 时间序列
+
+  function pruneHits(now) {
+    while (hits.length && now - hits[0] > 60000) hits.shift();
+  }
+  // 瞬时 APM = 最近 1 秒内的触发次数 ×60（换算为每分钟速率）
+  function computeInstant(now) {
+    let c = 0;
+    for (let i = hits.length - 1; i >= 0; i--) {
+      if (now - hits[i] <= APM_WINDOW) c++;
+      else break;
+    }
+    return c * (60000 / APM_WINDOW);
+  }
+
+  function updateStats() {
+    const now = performance.now();
+    pruneHits(now);
+    const apm = computeInstant(now);
+    if (apm > peak) peak = apm;
+    elApm.textContent = Math.round(apm);
+    elPeak.textContent = Math.round(peak);
+    elTotal.textContent = total;
+    elCoverage.textContent = pressedSet.size + " / " + totalMappable.n;
+  }
+
+  // ---------- APM 曲线图 ----------
+  const canvas = document.getElementById("apmChart");
+  const ctx = canvas.getContext("2d");
+  const elChartNow = document.getElementById("chartNow");
+
+  function sizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = Math.max(1, Math.round(w * dpr));
+    canvas.height = Math.max(1, Math.round(h * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function drawChart() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    ctx.clearRect(0, 0, w, h);
+    const padL = 30, padR = 8, padT = 8, padB = 14;
+    const plotW = w - padL - padR, plotH = h - padT - padB;
+    if (plotW <= 0 || plotH <= 0) return;
+
+    let maxV = 60;
+    for (const v of apmBuf) if (v > maxV) maxV = v;
+    const yMax = Math.ceil(maxV / 60) * 60;   // 向上取整到 60 的整数倍
+
+    // 网格 + 刻度
+    ctx.lineWidth = 1;
+    ctx.font = "10px -apple-system, system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    const GL = 3;
+    for (let i = 0; i <= GL; i++) {
+      const val = yMax * i / GL;
+      const y = padT + plotH - (val / yMax) * plotH;
+      ctx.strokeStyle = "#eee";
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+      ctx.fillStyle = "#b0b0b0";
+      ctx.fillText(String(Math.round(val)), 2, y);
+    }
+
+    const n = apmBuf.length;
+    if (n >= 2) {
+      // 最新点固定在右端，曲线向左滚动
+      const xAt = (i) => padL + plotW - ((n - 1 - i) / (MAX_POINTS - 1)) * plotW;
+      const yAt = (v) => padT + plotH - (v / yMax) * plotH;
+      // 填充
+      ctx.beginPath();
+      ctx.moveTo(xAt(0), yAt(apmBuf[0]));
+      for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(apmBuf[i]));
+      ctx.lineTo(xAt(n - 1), padT + plotH);
+      ctx.lineTo(xAt(0), padT + plotH);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(17,17,17,0.05)";
+      ctx.fill();
+      // 折线
+      ctx.beginPath();
+      ctx.moveTo(xAt(0), yAt(apmBuf[0]));
+      for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(apmBuf[i]));
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // 当前点
+      const lx = xAt(n - 1), ly = yAt(apmBuf[n - 1]);
+      ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#111"; ctx.fill();
+    }
+  }
+
+  function sampleApm() {
+    const now = performance.now();
+    pruneHits(now);
+    const apm = computeInstant(now);
+    apmBuf.push(apm);
+    if (apmBuf.length > MAX_POINTS) apmBuf.shift();
+    elChartNow.textContent = Math.round(apm);
+    drawChart();
+  }
+
+  // ---------- 锁定指示灯 ----------
+  const lockEls = {
+    CapsLock: document.getElementById("lock-caps"),
+    NumLock: document.getElementById("lock-num"),
+    ScrollLock: document.getElementById("lock-scroll"),
+  };
+  const lockKeyEls = {
+    CapsLock: codeMap.get("CapsLock"),
+    NumLock: codeMap.get("NumLock"),
+    ScrollLock: codeMap.get("ScrollLock"),
+  };
+  function syncLocks(e) {
+    ["CapsLock", "NumLock", "ScrollLock"].forEach((name) => {
+      const on = e ? e.getModifierState(name) : false;
+      lockEls[name].classList.toggle("on", on);
+      const k = lockKeyEls[name];
+      if (k) k.classList.toggle("locked", on);
+    });
+  }
+
+  // ---------- 键盘事件 ----------
+  const preventSet = new Set([
+    "Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+    "Tab", "Backspace", "MetaLeft", "MetaRight",
+    "F1", "F2", "F3", "F4", "F5", "F6",
+    "F7", "F8", "F9", "F10", "F11", "F12",
+  ]);
+
+  // 修饰键左右判别：优先信任 e.location（物理位置），其次 e.code。
+  // 某些环境（IME、远程桌面、改键软件）会把右修饰键的 code 误报为左侧，
+  // 但 location 仍可能正确上报为 RIGHT。
+  // 另有一类环境（输入法劫持右 Shift 后重新注入合成事件）上报 code 为空、
+  // location 为 0——此时左键事件是正常的，异常事件只会来自被劫持的右侧。
+  function resolveCode(e) {
+    const LEFT = 1, RIGHT = 2;   // KeyboardEvent.DOM_KEY_LOCATION_*
+    const modMap = {
+      Shift:   ["ShiftLeft", "ShiftRight"],
+      Control: ["ControlLeft", "ControlRight"],
+      Alt:     ["AltLeft", "AltRight"],
+      Meta:    ["MetaLeft", "MetaRight"],
+    };
+    const pair = modMap[e.key];
+    if (pair) {
+      if (e.location === RIGHT) return pair[1];
+      if (e.location === LEFT) return pair[0];
+      // location 为 0：正常修饰键事件不会这样上报，属注入事件。
+      // code 为空 → 判定为被劫持重注入的右侧键；code 有效则用 code。
+      if (codeMap.has(e.code)) return e.code;
+      return pair[1];
+    }
+    return e.code;
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (preventSet.has(e.code)) e.preventDefault();
+    syncLocks(e);
+
+    const code = resolveCode(e);
+    const el = codeMap.get(code);
+    if (el) {
+      el.classList.add("active");
+      // 触发即记下“已触发”标记：
+      // Win 键会弹系统菜单导致页面失焦、右 Shift 常被输入法吞掉 keyup，
+      // 若等 keyup 再标记，这类键就永远不会变灰。active 被清后 hit 保留，即显灰底。
+      el.classList.add("hit");
+      pressedSet.add(code);
+      // 同时显示原始 code 与位置，便于诊断系统实际上报了什么
+      elLast.textContent = (el.textContent || code) + " · " + (e.code || "空") + " · 位置" + e.location;
+    } else {
+      // 未识别的事件也显示原始 code 与位置，便于诊断按键是否到达页面
+      elLast.textContent = (e.code || (e.key + "?")) + " · 位置" + e.location;
+    }
+    // 统计触发次数（含系统重复发送，符合“触发次数”语义）
+    hits.push(performance.now());
+    total++;
+    updateStats();
+  }, { passive: false });
+
+  window.addEventListener("keyup", (e) => {
+    syncLocks(e);
+    const el = codeMap.get(resolveCode(e));
+    if (el) {
+      el.classList.remove("active");
+      el.classList.add("hit");   // 松开后置为“已触发”灰底
+    }
+  });
+
+  // 失焦时清空按下状态，避免“卡住”高亮
+  window.addEventListener("blur", () => {
+    codeMap.forEach((el) => el.classList.remove("active"));
+  });
+
+  // 定时刷新瞬时 APM（空闲时回落）+ 曲线采样
+  sizeCanvas();
+  setInterval(updateStats, 250);
+  setInterval(sampleApm, SAMPLE_MS);
+  window.addEventListener("resize", () => { sizeCanvas(); drawChart(); });
+
+  // ---------- 重置 ----------
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    hits.length = 0;
+    apmBuf.length = 0;
+    total = 0;
+    peak = 0;
+    pressedSet.clear();
+    elChartNow.textContent = "0";
+    codeMap.forEach((el) => el.classList.remove("active", "hit"));   // 清空三态样式
+    updateStats();
+    drawChart();
+  });
+
+  // 初始化
+  updateStats();
+})();
+</script>
+</body>
+</html>
