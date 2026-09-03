@@ -1,3 +1,5 @@
+[English](https://github.com/Anan-up/Keyboard-Test/blob/main/README.md) | [简体中文](https://github.com/Anan-up/Keyboard-Test/blob/main/README_Simplified_Chinese.md) | [繁体中文](https://github.com/Anan-up/Keyboard-Test/blob/main/README_Classical_Chinese.md)
+
 使用一个 HTML 文件实现了一个**全尺寸 108 键键盘测试工具**，用于实时监测按键触发情况，并提供 APM（Actions Per Minute，每分钟操作次数）统计与可视化。
 
 ---
