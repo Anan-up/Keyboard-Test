@@ -1,4 +1,4 @@
-[English](README.md) | [简体中文](README_Simplified_Chinese.md) | [繁体中文](README_Classical_Chinese.md)
+[English](README.md) | [简体中文](README_Simplified_Chinese.md) | [繁體中文](README_Classical_Chinese.md)
 
 以一 HTML 文件，成**全尺寸百八鍵鍵盤測試之器**，可實時察諸鍵之觸發，復計 APM（每分操作之數），圖其變化。
 
