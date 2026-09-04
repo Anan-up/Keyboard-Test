@@ -1,4 +1,4 @@
-[English](README.md) | [简体中文](README_Simplified_Chinese.md) | [繁体中文](README_Classical_Chinese.md)
+[English](README.md) | [简体中文](README_Simplified_Chinese.md) | [繁體中文](README_Classical_Chinese.md)
 
 A single HTML file implements a **full-size 108-key keyboard testing tool** that monitors key presses in real time and provides APM (Actions Per Minute) statistics and visualization.
 
